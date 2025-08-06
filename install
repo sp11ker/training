@@ -1,12 +1,4 @@
-# install script notes for lifecycle tab
-git clone https://github.com/sp11ker/training.git
-cd training
-curl -O https://releases.hashicorp.com/terraform/1.12.2/terraform_1.12.2_linux_amd64.zip
-unzip terraform_1.12.2_linux_amd64.zip
-mv terraform /usr/local/bin/
-terraform init -input=false
-terraform plan -out=tfplan -input=false
-terraform apply -input=false -auto-approve tfplan
-cp my-keypair.pem /root/.ssh/
+# Additional commands once terraform has run
+
 terraform output instance_public_ip
 ssh -i /root/.ssh/my-keypair.pem ec2-user@x.x.x.x
