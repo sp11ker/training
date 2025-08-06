@@ -1,0 +1,5 @@
+sudo dnf install -y yum-utils curl unzip gnupg && sudo yum-config-manager --add-repo https://rpm.releases.hashicorp.com/RHEL/hashicorp.repo && sudo dnf install -y terraform
+terraform init
+terraform plan -out=tfplan
+terraform apply
+cp my-keypair.pem /root/.ssh/
