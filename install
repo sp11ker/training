@@ -1,6 +1,7 @@
 curl -O https://releases.hashicorp.com/terraform/1.12.2/terraform_1.12.2_linux_amd64.zip
 unzip terraform_1.12.2_linux_amd64.zip
 mv terraform /usr/local/bin/
+cd training
 terraform init
 terraform plan -out=tfplan
 terraform apply
