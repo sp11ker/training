@@ -1,4 +1,6 @@
-sudo dnf install -y yum-utils curl unzip gnupg && sudo yum-config-manager --add-repo https://rpm.releases.hashicorp.com/RHEL/hashicorp.repo && sudo dnf install -y terraform
+curl -O https://releases.hashicorp.com/terraform/1.8.2/terraform_1.12.2_linux_amd64.zip
+unzip terraform_1.8.2_linux_amd64.zip
+mv terraform /usr/local/bin/
 terraform init
 terraform plan -out=tfplan
 terraform apply
