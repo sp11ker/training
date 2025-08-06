@@ -8,4 +8,4 @@ terraform plan -out=tfplan -input=false
 terraform apply -input=false -auto-approve tfplan
 cp my-keypair.pem /root/.ssh/
 terraform output instance_public_ip
-ssh -i /root/.ssh/my-keypair.pem ec2-user@13.53.126.162
+ssh -i /root/.ssh/my-keypair.pem ec2-user@x.x.x.x
