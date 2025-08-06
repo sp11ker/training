@@ -1,3 +1,4 @@
+# install script notes for lifecycle tab
 git clone https://github.com/sp11ker/training.git
 cd training
 curl -O https://releases.hashicorp.com/terraform/1.12.2/terraform_1.12.2_linux_amd64.zip
