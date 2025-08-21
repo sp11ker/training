@@ -82,4 +82,19 @@ resource "aws_instance" "web" {
   }
 }
 
+# 10. S3 Bucket for Flow Logs (unencrypted) ---
+resource "aws_s3_bucket" "flow_logs_bucket" {
+  bucket = "my-flow-logs-bucket-${random_id.suffix.hex}"
+
+  lifecycle {
+    prevent_destroy = true
+  }
+
+  # No server-side encryption block, so bucket is unencrypted
+}
+
+# 11. Random suffix for unique bucket name ---
+resource "random_id" "suffix" {
+  byte_length = 4
+}
 
