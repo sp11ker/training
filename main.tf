@@ -91,7 +91,7 @@ resource "random_id" "suffix" {
 
 # 11. S3 Bucket for VPC Flow Logs
 resource "aws_s3_bucket" "vpc_flow_logs" {
-  bucket = "my_vpc_flow_logs_${random_id.suffix.hex}"
+  bucket = "my-vpc-flow-logs-${random_id.suffix.hex}"
 
   lifecycle {
     prevent_destroy = true
@@ -134,5 +134,8 @@ resource "aws_flow_log" "vpc" {
   traffic_type         = "ALL"
   log_destination      = aws_s3_bucket.vpc_flow_logs.arn
   log_destination_type = "s3"
+
+# Custom log format (underscores)
+  log_format = "$${version} $${account_id} $${interface_id} $${srcaddr} $${dstaddr} $${srcport} $${dstport} $${protocol} $${packets} $${bytes} $${start} $${end} $${action} $${log_status}"
 }
 
