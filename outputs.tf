@@ -12,12 +12,3 @@ resource "local_file" "private_key" {
   filename        = "${path.module}/my-keypair.pem"
   file_permission = "0400"
 }
-
-# ✅ New outputs for flow logs
-output "flow_logs_bucket_name" {
-  value = aws_s3_bucket.vpc_flow_logs.bucket
-}
-
-output "vpc_flow_log_id" {
-  value = aws_flow_log.vpc.id
-}
