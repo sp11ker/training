@@ -134,8 +134,5 @@ resource "aws_flow_log" "vpc" {
   traffic_type         = "ALL"
   log_destination      = aws_s3_bucket.vpc_flow_logs.arn
   log_destination_type = "s3"
-
-# Custom log format (underscores)
-  log_format = "$${version} $${account_id} $${interface_id} $${srcaddr} $${dstaddr} $${srcport} $${dstport} $${protocol} $${packets} $${bytes} $${start} $${end} $${action} $${log_status}"
 }
 
