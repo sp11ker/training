@@ -91,7 +91,26 @@ resource "random_id" "suffix" {
   byte_length = 4
 }
 
-# 11. VPC Flow Log
+# 11. Bucket policy to allow VPC Flow Logs service to write logs
+resource "aws_s3_bucket_policy" "flow_logs_policy" {
+  bucket = aws_s3_bucket.flow_logs_bucket.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = {
+          Service = "vpc-flow-logs.amazonaws.com"
+        }
+        Action   = "s3:PutObject"
+        Resource = "${aws_s3_bucket.flow_logs_bucket.arn}/*"
+      }
+    ]
+  })
+}
+
+# 12. VPC Flow Log
 resource "aws_flow_log" "vpc_flow_log" {
   log_destination      = aws_s3_bucket.flow_logs_bucket.arn
   log_destination_type = "s3"
@@ -101,4 +120,6 @@ resource "aws_flow_log" "vpc_flow_log" {
   log_format = "version account-id interface-id srcaddr dstaddr srcport dstport protocol packets bytes start end action log-status"
 
   max_aggregation_interval = 600
+
+  depends_on = [aws_s3_bucket_policy.flow_logs_policy]
 }
