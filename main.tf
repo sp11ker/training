@@ -139,3 +139,16 @@ resource "aws_flow_log" "vpc_flow_log" {
 
   depends_on = [aws_s3_bucket_policy.flow_logs_policy]
 }
+
+# --- 15. Outputs ---
+output "instance_public_ip" {
+  value = aws_instance.web.public_ip
+}
+
+output "flow_logs_bucket_name" {
+  value = aws_s3_bucket.flow_logs_bucket.id
+}
+
+output "flow_log_id" {
+  value = aws_flow_log.vpc_flow_log.id
+}
