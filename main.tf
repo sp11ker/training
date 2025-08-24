@@ -1,5 +1,5 @@
 provider "aws" {
-  region = var.aws_region
+  region = "eu-north-1"
 }
 
 # 1. VPC
@@ -11,7 +11,7 @@ resource "aws_vpc" "main" {
 resource "aws_subnet" "main" {
   vpc_id                  = aws_vpc.main.id
   cidr_block              = "10.0.1.0/24"
-  availability_zone       = "${var.aws_region}a"
+  availability_zone       = "eu-north-1a"
   map_public_ip_on_launch = true
 }
 
@@ -82,59 +82,23 @@ resource "aws_instance" "web" {
   }
 }
 
-# 10. S3 Bucket for Flow Logs
+# 10. S3 Bucket for Flow Logs (unencrypted)
 resource "aws_s3_bucket" "flow_logs_bucket" {
-  bucket        = "my-flow-logs-${random_id.bucket_suffix.hex}"
-  force_destroy = true
+  bucket = "my-flow-logs-bucket-${random_id.suffix.hex}"
 }
 
-resource "random_id" "bucket_suffix" {
+resource "random_id" "suffix" {
   byte_length = 4
 }
 
-# 11. IAM Role for Flow Logs
-resource "aws_iam_role" "flow_logs_role" {
-  name = "flow-logs-role"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [{
-      Effect = "Allow",
-      Principal = {
-        Service = "vpc-flow-logs.amazonaws.com"
-      },
-      Action = "sts:AssumeRole"
-    }]
-  })
-}
-
-# 12. IAM Policy for Flow Logs to write to S3
-resource "aws_iam_role_policy" "flow_logs_policy" {
-  name = "flow-logs-s3-policy"
-  role = aws_iam_role.flow_logs_role.id
-
-  policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [{
-      Effect = "Allow",
-      Action = ["s3:PutObject"],
-      Resource = "${aws_s3_bucket.flow_logs_bucket.arn}/*"
-    }]
-  })
-}
-
-# 13. VPC Flow Logs
-resource "aws_flow_log" "vpc_flow_logs" {
+# 11. VPC Flow Log
+resource "aws_flow_log" "vpc_flow_log" {
   log_destination      = aws_s3_bucket.flow_logs_bucket.arn
   log_destination_type = "s3"
   traffic_type         = "ALL"
   vpc_id               = aws_vpc.main.id
-  iam_role_arn         = aws_iam_role.flow_logs_role.arn
 
-  log_format = "$${version} $${account-id} $${interface-id} $${srcaddr} $${dstaddr} $${srcport} $${dstport} $${protocol} $${packets} $${bytes} $${start} $${end} $${action} $${log-status}"
+  log_format = "version account-id interface-id srcaddr dstaddr srcport dstport protocol packets bytes start end action log-status"
 
-  depends_on = [
-    aws_s3_bucket.flow_logs_bucket,
-    aws_iam_role_policy.flow_logs_policy
-  ]
+  max_aggregation_interval = 600
 }
