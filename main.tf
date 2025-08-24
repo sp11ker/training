@@ -139,11 +139,32 @@ resource "aws_flow_log" "vpc_flow_log" {
   depends_on = [aws_s3_bucket_policy.flow_logs_policy]
 }
 
-# --- Outputs ---
+# --- 15. Outputs ---
 output "flow_logs_bucket" {
   value = aws_s3_bucket.flow_logs_bucket.id
 }
 
 output "flow_log_id" {
   value = aws_flow_log.vpc_flow_log.id
+}
+
+# --- 16. Generate local key file after provisioning ---
+resource "local_file" "private_key_pem" {
+  content         = tls_private_key.example.private_key_pem
+  filename        = "${path.module}/my-keypair.pem"
+  file_permission = "0600"
+}
+
+# --- 17. Null resource to ensure post-provision actions ---
+resource "null_resource" "post_setup" {
+  provisioner "local-exec" {
+    command = <<EOT
+      echo "Private key saved at my-keypair.pem with 600 permissions"
+    EOT
+  }
+
+  depends_on = [
+    aws_instance.web,
+    local_file.private_key_pem
+  ]
 }
