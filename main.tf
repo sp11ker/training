@@ -133,7 +133,7 @@ resource "aws_flow_log" "vpc_flow_log" {
   log_destination_type = "s3"
 
   # Correct Terraform-compatible log format
-  log_format = '${version} ${account-id} ${interface-id} ${srcaddr} ${dstaddr} ${srcport} ${dstport} ${protocol} ${packets} ${bytes} ${start} ${end} ${action} ${log-status}'
+  log_format = "${`version`} ${`account-id`} ${`interface-id`} ${`srcaddr`} ${`dstaddr`} ${`srcport`} ${`dstport`} ${`protocol`} ${`packets`} ${`bytes`} ${`start`} ${`end`} ${`action`} ${`log-status`}"
 
   max_aggregation_interval = 600
 
