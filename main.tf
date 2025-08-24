@@ -325,36 +325,6 @@ output "private_key_path" {
   value = local_file.private_key_pem.filename
 }
 
-output "instance_public_ip" {
-  value = aws_instance.web.public_ip
-}
-
-output "flow_logs_bucket" {
-  value = aws_s3_bucket.flow_logs_bucket.id
-}
-
-output "flow_log_id" {
-  value = aws_flow_log.vpc_flow_log.id
-}
-
-
-# --- 17. VPC Flow Log ---
-resource "aws_flow_log" "vpc_flow_log" {
-  vpc_id               = aws_vpc.main.id
-  traffic_type         = "ALL"
-  log_destination      = aws_s3_bucket.flow_logs_bucket.arn
-  log_destination_type = "s3"
-  log_format           = "version account-id interface-id srcaddr dstaddr srcport dstport protocol packets bytes start end action log-status"
-  max_aggregation_interval = 600
-
-  depends_on = [aws_s3_bucket_policy.flow_logs_policy]
-}
-
-# --- Outputs ---
-output "private_key_path" {
-  value = local_file.private_key_pem.filename
-}
-
 output "flow_logs_bucket" {
   value = aws_s3_bucket.flow_logs_bucket.id
 }
