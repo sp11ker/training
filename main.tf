@@ -114,7 +114,7 @@ resource "aws_s3_bucket_policy" "flow_logs_policy" {
         Effect = "Allow"
         Principal = { Service = "vpc-flow-logs.amazonaws.com" }
         Action   = "s3:PutObject"
-        Resource = "${aws_s3_bucket.flow_logs_bucket.arn}/AWSLogs/${data.aws_caller_identity.current.account_id}/*"
+        Resource = "${aws_s3_bucket.flow_logs_bucket.arn}/*"
         Condition = {
           StringEquals = {
             "s3:x-amz-acl" = "bucket-owner-full-control"
@@ -132,54 +132,12 @@ resource "aws_s3_bucket_policy" "flow_logs_policy" {
   })
 }
 
-# --- 15. IAM Role for VPC Flow Logs ---
-resource "aws_iam_role" "vpc_flow_logs_role" {
-  name = "vpc-flow-logs-role"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [
-      {
-        Effect = "Allow",
-        Principal = {
-          Service = "vpc-flow-logs.amazonaws.com"
-        },
-        Action = "sts:AssumeRole"
-      }
-    ]
-  })
-}
-
-# --- 16. IAM Role Policy for S3 access ---
-resource "aws_iam_role_policy" "vpc_flow_logs_policy" {
-  name = "vpc-flow-logs-policy"
-  role = aws_iam_role.vpc_flow_logs_role.id
-
-  policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [
-      {
-        Effect = "Allow",
-        Action = [
-          "s3:PutObject",
-          "s3:GetBucketAcl"
-        ],
-        Resource = [
-          "${aws_s3_bucket.flow_logs_bucket.arn}/*",
-          aws_s3_bucket.flow_logs_bucket.arn
-        ]
-      }
-    ]
-  })
-}
-
-# --- 17. VPC Flow Log ---
+# --- 15. VPC Flow Log ---
 resource "aws_flow_log" "vpc_flow_log" {
   vpc_id               = aws_vpc.main.id
   traffic_type         = "ALL"
   log_destination      = aws_s3_bucket.flow_logs_bucket.arn
   log_destination_type = "s3"
-  iam_role_arn         = aws_iam_role.vpc_flow_logs_role.arn
   log_format           = "version account-id interface-id srcaddr dstaddr srcport dstport protocol packets bytes start end action log-status"
   max_aggregation_interval = 600
 
@@ -187,10 +145,6 @@ resource "aws_flow_log" "vpc_flow_log" {
 }
 
 # --- Outputs ---
-output "private_key_path" {
-  value = local_file.private_key_pem.filename
-}
-
 output "flow_logs_bucket" {
   value = aws_s3_bucket.flow_logs_bucket.id
 }
