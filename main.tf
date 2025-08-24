@@ -82,6 +82,9 @@ resource "aws_instance" "web" {
   }
 }
 
+#################  This was added for flow logs but can be removed if not managing traffic withe the AWS onboarding or removed if doing the flow log access using the CLI,Console or CFT methods mentioned in the lab - NM 24th Aug 2025
+
+
 # --- 10. Random suffix for unique bucket name ---
 resource "random_id" "suffix" {
   byte_length = 4
