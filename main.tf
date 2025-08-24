@@ -82,4 +82,59 @@ resource "aws_instance" "web" {
   }
 }
 
+# 10. S3 Bucket for Flow Logs
+resource "aws_s3_bucket" "flow_logs_bucket" {
+  bucket        = "my-flow-logs-${random_id.bucket_suffix.hex}"
+  force_destroy = true
+}
 
+resource "random_id" "bucket_suffix" {
+  byte_length = 4
+}
+
+# 11. IAM Role for Flow Logs
+resource "aws_iam_role" "flow_logs_role" {
+  name = "flow-logs-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [{
+      Effect = "Allow",
+      Principal = {
+        Service = "vpc-flow-logs.amazonaws.com"
+      },
+      Action = "sts:AssumeRole"
+    }]
+  })
+}
+
+# 12. IAM Policy for Flow Logs to write to S3
+resource "aws_iam_role_policy" "flow_logs_policy" {
+  name = "flow-logs-s3-policy"
+  role = aws_iam_role.flow_logs_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [{
+      Effect = "Allow",
+      Action = ["s3:PutObject"],
+      Resource = "${aws_s3_bucket.flow_logs_bucket.arn}/*"
+    }]
+  })
+}
+
+# 13. VPC Flow Logs
+resource "aws_flow_log" "vpc_flow_logs" {
+  log_destination      = aws_s3_bucket.flow_logs_bucket.arn
+  log_destination_type = "s3"
+  traffic_type         = "ALL"
+  vpc_id               = aws_vpc.main.id
+  iam_role_arn         = aws_iam_role.flow_logs_role.arn
+
+  log_format = "$${version} $${account-id} $${interface-id} $${srcaddr} $${dstaddr} $${srcport} $${dstport} $${protocol} $${packets} $${bytes} $${start} $${end} $${action} $${log-status}"
+
+  depends_on = [
+    aws_s3_bucket.flow_logs_bucket,
+    aws_iam_role_policy.flow_logs_policy
+  ]
+}
