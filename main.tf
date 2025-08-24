@@ -2,25 +2,25 @@ provider "aws" {
   region = "eu-north-1"
 }
 
-# 1. VPC
+# --- 1. VPC ---
 resource "aws_vpc" "main" {
   cidr_block = "10.0.0.0/16"
 }
 
-# 2. Subnet
+# --- 2. Subnet ---
 resource "aws_subnet" "main" {
   vpc_id                  = aws_vpc.main.id
   cidr_block              = "10.0.1.0/24"
-  availability_zone       = "${var.aws_region}a"
+  availability_zone       = "eu-north-1a"
   map_public_ip_on_launch = true
 }
 
-# 3. Internet Gateway
+# --- 3. Internet Gateway ---
 resource "aws_internet_gateway" "gw" {
   vpc_id = aws_vpc.main.id
 }
 
-# 4. Route Table
+# --- 4. Route Table ---
 resource "aws_route_table" "public" {
   vpc_id = aws_vpc.main.id
 
@@ -30,13 +30,13 @@ resource "aws_route_table" "public" {
   }
 }
 
-# 5. Route Table Association
+# --- 5. Route Table Association ---
 resource "aws_route_table_association" "a" {
   subnet_id      = aws_subnet.main.id
   route_table_id = aws_route_table.public.id
 }
 
-# 6. Security Group (Allow SSH)
+# --- 6. Security Group (Allow SSH) ---
 resource "aws_security_group" "ssh" {
   name        = "my-sg"
   description = "Allow SSH"
@@ -57,19 +57,19 @@ resource "aws_security_group" "ssh" {
   }
 }
 
-# 7. Generate SSH Key Pair (TLS)
+# --- 7. TLS private key (SSH key) ---
 resource "tls_private_key" "example" {
   algorithm = "RSA"
   rsa_bits  = 4096
 }
 
-# 8. AWS Key Pair from TLS
+# --- 8. AWS Key Pair ---
 resource "aws_key_pair" "my_key" {
   key_name   = "my-keypair"
   public_key = tls_private_key.example.public_key_openssh
 }
 
-# 9. EC2 Instance
+# --- 9. EC2 Instance ---
 resource "aws_instance" "web" {
   ami                    = var.ami_id
   instance_type          = "t3.nano"
@@ -82,20 +82,20 @@ resource "aws_instance" "web" {
   }
 }
 
-# 10. Random suffix for unique S3 bucket name
+# --- 10. Random suffix for S3 bucket ---
 resource "random_id" "suffix" {
   byte_length = 4
 }
 
-# 11. S3 Bucket for VPC Flow Logs (unencrypted)
+# --- 11. S3 Bucket for Flow Logs (unencrypted) ---
 resource "aws_s3_bucket" "flow_logs_bucket" {
   bucket = "my-flow-logs-bucket-${random_id.suffix.hex}"
 }
 
-# 12. Get current AWS account ID
+# --- 12. Current AWS account ID ---
 data "aws_caller_identity" "current" {}
 
-# 13. Bucket policy to allow VPC Flow Logs service to write logs
+# --- 13. Bucket policy for VPC Flow Logs ---
 resource "aws_s3_bucket_policy" "flow_logs_policy" {
   bucket = aws_s3_bucket.flow_logs_bucket.id
 
@@ -125,40 +125,32 @@ resource "aws_s3_bucket_policy" "flow_logs_policy" {
   })
 }
 
-# 14. VPC Flow Log
+# --- 14. VPC Flow Log ---
 resource "aws_flow_log" "vpc_flow_log" {
   vpc_id               = aws_vpc.main.id
   traffic_type         = "ALL"
   log_destination      = aws_s3_bucket.flow_logs_bucket.arn
   log_destination_type = "s3"
-  max_aggregation_interval = 600
 
   # Terraform-compatible log format using heredoc
   log_format = <<EOT
 version account-id interface-id srcaddr dstaddr srcport dstport protocol packets bytes start end action log-status
 EOT
 
+  max_aggregation_interval = 600
+
   depends_on = [aws_s3_bucket_policy.flow_logs_policy]
 }
 
-# --- Outputs for verification ---
+# --- 15. Outputs ---
+output "instance_public_ip" {
+  value = aws_instance.web.public_ip
+}
+
+output "flow_log_id" {
+  value = aws_flow_log.vpc_flow_log.id
+}
 
 output "flow_logs_bucket_name" {
-  description = "The name of the S3 bucket storing VPC flow logs"
-  value       = aws_s3_bucket.flow_logs_bucket.id
-}
-
-output "flow_logs_bucket_arn" {
-  description = "The ARN of the S3 bucket storing VPC flow logs"
-  value       = aws_s3_bucket.flow_logs_bucket.arn
-}
-
-output "vpc_flow_log_id" {
-  description = "The ID of the created VPC Flow Log"
-  value       = aws_flow_log.vpc_flow_log.id
-}
-
-output "vpc_flow_log_status" {
-  description = "The current status of the VPC Flow Log"
-  value       = aws_flow_log.vpc_flow_log.flow_log_status
+  value = aws_s3_bucket.flow_logs_bucket.id
 }
