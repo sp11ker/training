@@ -143,10 +143,6 @@ EOT
 }
 
 # --- 15. Outputs ---
-output "instance_public_ip" {
-  value = aws_instance.web.public_ip
-}
-
 output "flow_log_id" {
   value = aws_flow_log.vpc_flow_log.id
 }
