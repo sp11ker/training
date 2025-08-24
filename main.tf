@@ -1,5 +1,5 @@
 provider "aws" {
-  region = var.aws_region
+  region = "eu-north-1"
 }
 
 # 1. VPC
@@ -11,7 +11,7 @@ resource "aws_vpc" "main" {
 resource "aws_subnet" "main" {
   vpc_id                  = aws_vpc.main.id
   cidr_block              = "10.0.1.0/24"
-  availability_zone       = "${var.aws_region}a"
+  availability_zone       = "eu-north-1a"
   map_public_ip_on_launch = true
 }
 
@@ -82,7 +82,7 @@ resource "aws_instance" "web" {
   }
 }
 
-# --- VPC Flow Logs Setup ---
+# --- FLOW LOG RESOURCES ---
 
 # 10. Random suffix for unique bucket name
 resource "random_id" "suffix" {
@@ -134,8 +134,7 @@ resource "aws_flow_log" "vpc_flow_log" {
   log_destination      = aws_s3_bucket.flow_logs_bucket.arn
   log_destination_type = "s3"
 
-  # Correct log format without underscores
-  log_format = "${version} ${account-id} ${interface-id} ${srcaddr} ${dstaddr} ${srcport} ${dstport} ${protocol} ${packets} ${bytes} ${start} ${end} ${action} ${log-status}"
+  log_format = "\${version} \${account-id} \${interface-id} \${srcaddr} \${dstaddr} \${srcport} \${dstport} \${protocol} \${packets} \${bytes} \${start} \${end} \${action} \${log-status}"
 
   max_aggregation_interval = 600
 
