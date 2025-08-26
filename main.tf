@@ -84,22 +84,63 @@ resource "aws_instance" "web" {
 
 #################  This was added for flow logs but can be removed if not managing traffic withe the AWS onboarding or removed if doing the flow log access using the CLI,Console or CFT methods mentioned in the lab - NM 24th Aug 2025
 
-# --- 10. S3 + flow log ---
-resource "aws_s3_bucket" "s3bucket" {
-  bucket = "us-east-1-${data.aws_caller_identity.current.account_id}"
+
+
+# --- 10. Random suffix for unique bucket name ---
+resource "random_id" "suffix" {
+  byte_length = 4
 }
 
+# --- 11. S3 Bucket for VPC Flow Logs (unencrypted) ---
+resource "aws_s3_bucket" "flow_logs_bucket" {
+  bucket = "my-flow-logs-bucket-${random_id.suffix.hex}"
+  acl    = "private"
+}
+
+# --- 12. Current AWS Account ID ---
 data "aws_caller_identity" "current" {}
 
-resource "aws_flow_log" "flowlogs1" {
-  vpc_id            = aws_vpc.vpc1.id
-  log_destination   = aws_s3_bucket.s3bucket.arn
-  log_destination_type = "s3"
-  traffic_type      = "ALL"
+# --- 13. Bucket Policy to allow VPC Flow Logs service to write logs ---
+resource "aws_s3_bucket_policy" "flow_logs_policy" {
+  bucket = aws_s3_bucket.flow_logs_bucket.id
 
-  tags = {
-    Name = "Flow-logs1"
-  }
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid = "AWSLogDeliveryWrite"
+        Effect = "Allow"
+        Principal = { Service = "vpc-flow-logs.amazonaws.com" }
+        Action   = "s3:PutObject"
+        Resource = "${aws_s3_bucket.flow_logs_bucket.arn}/AWSLogs/${data.aws_caller_identity.current.account_id}/*"
+        Condition = {
+          StringEquals = {
+            "s3:x-amz-acl" = "bucket-owner-full-control"
+          }
+        }
+      },
+      {
+        Sid = "AWSLogDeliveryAclCheck"
+        Effect = "Allow"
+        Principal = { Service = "vpc-flow-logs.amazonaws.com" }
+        Action   = "s3:GetBucketAcl"
+        Resource = aws_s3_bucket.flow_logs_bucket.arn
+      }
+    ]
+  })
+}
+
+# --- 14. VPC Flow Log ---
+resource "aws_flow_log" "vpc_flow_log" {
+  vpc_id               = aws_vpc.main.id
+  traffic_type         = "ALL"
+  log_destination      = aws_s3_bucket.flow_logs_bucket.arn
+  log_destination_type = "s3"
+
+  # S3 flow logs do not allow custom log_format; AWS uses the standard format automatically
+  max_aggregation_interval = 600
+
+  depends_on = [aws_s3_bucket_policy.flow_logs_policy]
 }
 
 # --- 15. Outputs ---
