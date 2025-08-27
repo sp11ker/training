@@ -134,11 +134,9 @@ resource "aws_flow_log" "vpc_flow_log" {
   traffic_type         = "ALL"
   log_destination      = aws_s3_bucket.flow_logs_bucket.arn
   log_destination_type = "s3"
-  traffic_type      = "ALL"
-
 
   # S3 flow logs do not allow custom log_format; AWS uses the standard format automatically
-  max_aggregation_interval = 600
+  max_aggregation_interval = 60
 
   depends_on = [aws_s3_bucket_policy.flow_logs_policy]
 }
