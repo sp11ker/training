@@ -90,6 +90,40 @@ resource "aws_security_group" "ssh" {
 }
 
 ###############################
+# 6b. Illumio Flow Log Access (HTTPS 443)
+###############################
+resource "aws_security_group_rule" "illumio_flow_logs" {
+  type              = "ingress"
+  from_port         = 443
+  to_port           = 443
+  protocol          = "tcp"
+  security_group_id = aws_security_group.ssh.id
+  cidr_blocks = [
+    # Illumio Control Plane (all regions)
+    "35.167.22.34/32",
+    "52.88.124.247/32",
+    "52.88.88.252/32",
+
+    # Illumio US West Data Plane (for specified regions)
+    "35.163.224.94/32",
+    "44.226.137.227/32",
+    "54.190.103.0/32",
+
+    # Illumio EU West (UK) Data Plane
+    "18.169.5.9/32",
+    "13.41.233.77/32",
+    "18.169.6.17/32",
+
+    # Illumio APAC Data Plane
+    "13.54.140.138/32",
+    "52.63.108.169/32",
+    "52.64.120.98/32"
+  ]
+  description = "Allow Illumio flow log access on TCP 443"
+}
+
+
+###############################
 # 7. Generate SSH Key Pair (TLS)
 ###############################
 resource "tls_private_key" "example" {
