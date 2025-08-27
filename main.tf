@@ -173,18 +173,6 @@ resource "aws_s3_bucket" "flow_logs_bucket" {
 }
 
 ###############################
-# 11a: Disable server-side encryption to force unencrypted bucket
-###############################
-resource "aws_s3_bucket_server_side_encryption_configuration" "disable_encryption" {
-  bucket = aws_s3_bucket.flow_logs_bucket.id
-
-  rule {
-    # Empty block disables account-level default encryption
-    apply_server_side_encryption_by_default {}
-  }
-}
-
-###############################
 # 12. Current AWS Account
 ###############################
 data "aws_caller_identity" "current" {}
