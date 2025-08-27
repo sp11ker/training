@@ -207,7 +207,9 @@ resource "local_file" "private_key_pem" {
 ###############################
 resource "null_resource" "post_setup" {
   provisioner "local-exec" {
-    command = "echo 'Private key saved at my-keypair.pem with 600 permissions'"
+    command = <<EOT
+      echo "Private key saved at my-keypair.pem with 600 permissions"
+    EOT
   }
 
   depends_on = [
@@ -215,3 +217,4 @@ resource "null_resource" "post_setup" {
     local_file.private_key_pem
   ]
 }
+
