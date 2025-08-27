@@ -93,7 +93,6 @@ resource "random_id" "suffix" {
 # --- 11. S3 Bucket for VPC Flow Logs (unencrypted) ---
 resource "aws_s3_bucket" "flow_logs_bucket" {
   bucket = "my-flow-logs-bucket-${random_id.suffix.hex}"
-  acl    = "private"
 }
 
 # --- 12. Current AWS Account ID ---
@@ -135,6 +134,8 @@ resource "aws_flow_log" "vpc_flow_log" {
   traffic_type         = "ALL"
   log_destination      = aws_s3_bucket.flow_logs_bucket.arn
   log_destination_type = "s3"
+  traffic_type      = "ALL"
+
 
   # S3 flow logs do not allow custom log_format; AWS uses the standard format automatically
   max_aggregation_interval = 600
