@@ -1,12 +1,12 @@
 ###############################
-#  Provider
+# Provider
 ###############################
 provider "aws" {
   region = "us-east-1"
 }
 
 ###############################
-#  1. VPC
+# 1. VPC
 ###############################
 resource "aws_vpc" "main" {
   cidr_block = "10.0.0.0/16"
@@ -16,7 +16,7 @@ resource "aws_vpc" "main" {
 }
 
 ###############################
-#  2. Subnet
+# 2. Subnet
 ###############################
 resource "aws_subnet" "main" {
   vpc_id                  = aws_vpc.main.id
@@ -29,7 +29,7 @@ resource "aws_subnet" "main" {
 }
 
 ###############################
-#  3. Internet Gateway
+# 3. Internet Gateway
 ###############################
 resource "aws_internet_gateway" "gw" {
   vpc_id = aws_vpc.main.id
@@ -39,7 +39,7 @@ resource "aws_internet_gateway" "gw" {
 }
 
 ###############################
-#  4. Route Table
+# 4. Route Table
 ###############################
 resource "aws_route_table" "public" {
   vpc_id = aws_vpc.main.id
@@ -55,7 +55,7 @@ resource "aws_route_table" "public" {
 }
 
 ###############################
-#  5. Route Table Association
+# 5. Route Table Association
 ###############################
 resource "aws_route_table_association" "a" {
   subnet_id      = aws_subnet.main.id
@@ -63,7 +63,7 @@ resource "aws_route_table_association" "a" {
 }
 
 ###############################
-#  6. Security Group (SSH)
+# 6. Security Group (Allow SSH)
 ###############################
 resource "aws_security_group" "ssh" {
   name        = "my-sg"
@@ -90,7 +90,7 @@ resource "aws_security_group" "ssh" {
 }
 
 ###############################
-#  7. TLS Key Pair
+# 7. Generate SSH Key Pair (TLS)
 ###############################
 resource "tls_private_key" "example" {
   algorithm = "RSA"
@@ -98,7 +98,7 @@ resource "tls_private_key" "example" {
 }
 
 ###############################
-#  8. AWS Key Pair
+# 8. AWS Key Pair from TLS
 ###############################
 resource "aws_key_pair" "my_key" {
   key_name   = "my-keypair"
@@ -106,7 +106,7 @@ resource "aws_key_pair" "my_key" {
 }
 
 ###############################
-#  9. EC2 Instance
+# 9. EC2 Instance
 ###############################
 resource "aws_instance" "web" {
   ami                    = var.ami_id
@@ -128,15 +128,7 @@ resource "random_id" "suffix" {
 }
 
 ###############################
-# 11. KMS Key for Flow Logs
-###############################
-resource "aws_kms_key" "flow_logs_key" {
-  description             = "KMS key for VPC Flow Logs in us-east-1"
-  deletion_window_in_days = 7
-}
-
-###############################
-# 12. S3 Bucket for Flow Logs
+# 11. S3 Bucket for VPC Flow Logs (force us-east-1)
 ###############################
 resource "aws_s3_bucket" "flow_logs_bucket" {
   bucket = "my-flow-logs-bucket-${random_id.suffix.hex}"
@@ -147,12 +139,12 @@ resource "aws_s3_bucket" "flow_logs_bucket" {
 }
 
 ###############################
-# 13. Current AWS Account
+# 12. Current AWS Account
 ###############################
 data "aws_caller_identity" "current" {}
 
 ###############################
-# 14. Bucket Policy for Flow Logs
+# 13. Bucket Policy for Flow Logs
 ###############################
 resource "aws_s3_bucket_policy" "flow_logs_policy" {
   bucket = aws_s3_bucket.flow_logs_bucket.id
@@ -180,21 +172,20 @@ resource "aws_s3_bucket_policy" "flow_logs_policy" {
 }
 
 ###############################
-# 15. VPC Flow Log
+# 14. VPC Flow Log
 ###############################
 resource "aws_flow_log" "vpc_flow_log" {
   vpc_id               = aws_vpc.main.id
   traffic_type         = "ALL"
   log_destination      = aws_s3_bucket.flow_logs_bucket.arn
   log_destination_type = "s3"
-  kms_key_id           = aws_kms_key.flow_logs_key.arn
   max_aggregation_interval = 60
 
   depends_on = [aws_s3_bucket_policy.flow_logs_policy]
 }
 
 ###############################
-# 16. Save private key locally
+# 15. Generate local key file
 ###############################
 resource "local_file" "private_key_pem" {
   content         = tls_private_key.example.private_key_pem
@@ -203,7 +194,7 @@ resource "local_file" "private_key_pem" {
 }
 
 ###############################
-# 17. Post-provision message
+# 16. Null resource to ensure post-provision actions
 ###############################
 resource "null_resource" "post_setup" {
   provisioner "local-exec" {
@@ -217,4 +208,3 @@ resource "null_resource" "post_setup" {
     local_file.private_key_pem
   ]
 }
-
