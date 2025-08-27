@@ -1,26 +1,43 @@
 provider "aws" {
-  region = var.aws_region
+  region = "us-east-1"
 }
 
+#####################
 # 1. VPC
+#####################
 resource "aws_vpc" "main" {
   cidr_block = "10.0.0.0/16"
+  tags = {
+    Name = "Terraform-VPC"
+  }
 }
 
+#####################
 # 2. Subnet
+#####################
 resource "aws_subnet" "main" {
   vpc_id                  = aws_vpc.main.id
   cidr_block              = "10.0.1.0/24"
-  availability_zone       = "${var.aws_region}a"
+  availability_zone       = "us-east-1a"
   map_public_ip_on_launch = true
+  tags = {
+    Name = "Terraform-Subnet"
+  }
 }
 
+#####################
 # 3. Internet Gateway
+#####################
 resource "aws_internet_gateway" "gw" {
   vpc_id = aws_vpc.main.id
+  tags = {
+    Name = "Terraform-IGW"
+  }
 }
 
+#####################
 # 4. Route Table
+#####################
 resource "aws_route_table" "public" {
   vpc_id = aws_vpc.main.id
 
@@ -28,15 +45,23 @@ resource "aws_route_table" "public" {
     cidr_block = "0.0.0.0/0"
     gateway_id = aws_internet_gateway.gw.id
   }
+
+  tags = {
+    Name = "Terraform-Public-RouteTable"
+  }
 }
 
+#####################
 # 5. Route Table Association
+#####################
 resource "aws_route_table_association" "a" {
   subnet_id      = aws_subnet.main.id
   route_table_id = aws_route_table.public.id
 }
 
-# 6. Security Group (Allow SSH)
+#####################
+# 6. Security Group (SSH)
+#####################
 resource "aws_security_group" "ssh" {
   name        = "my-sg"
   description = "Allow SSH"
@@ -55,21 +80,31 @@ resource "aws_security_group" "ssh" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
+
+  tags = {
+    Name = "Terraform-SSH-SG"
+  }
 }
 
-# 7. Generate SSH Key Pair (TLS)
+#####################
+# 7. TLS Key Pair
+#####################
 resource "tls_private_key" "example" {
   algorithm = "RSA"
   rsa_bits  = 4096
 }
 
-# 8. AWS Key Pair from TLS
+#####################
+# 8. AWS Key Pair
+#####################
 resource "aws_key_pair" "my_key" {
   key_name   = "my-keypair"
   public_key = tls_private_key.example.public_key_openssh
 }
 
+#####################
 # 9. EC2 Instance
+#####################
 resource "aws_instance" "web" {
   ami                    = var.ami_id
   instance_type          = "t3.nano"
@@ -82,26 +117,32 @@ resource "aws_instance" "web" {
   }
 }
 
-#################  This was added for flow logs but can be removed if not managing traffic withe the AWS onboarding or removed if doing the flow log access using the CLI,Console or CFT methods mentioned in the lab - NM 24th Aug 2025
-
-# --- 10. Random suffix for unique bucket name ---
+#####################
+# 10. Random suffix for bucket
+#####################
 resource "random_id" "suffix" {
   byte_length = 4
 }
 
-# --- 11. S3 Bucket for VPC Flow Logs (unencrypted) ---
+#####################
+# 11. S3 Bucket for Flow Logs
+#####################
 resource "aws_s3_bucket" "flow_logs_bucket" {
   bucket = "my-flow-logs-bucket-${random_id.suffix.hex}"
   acl    = "private"
-
-  # explicitly ensure bucket is in provider region
-  # Terraform picks up the provider region automatically
+  tags = {
+    Name = "Terraform-FlowLogs-Bucket"
+  }
 }
 
-# --- 12. Current AWS Account ID ---
+#####################
+# 12. Current AWS Account
+#####################
 data "aws_caller_identity" "current" {}
 
-# --- 13. Bucket Policy to allow VPC Flow Logs service to write logs ---
+#####################
+# 13. Bucket Policy for Flow Logs
+#####################
 resource "aws_s3_bucket_policy" "flow_logs_policy" {
   bucket = aws_s3_bucket.flow_logs_bucket.id
 
@@ -131,7 +172,9 @@ resource "aws_s3_bucket_policy" "flow_logs_policy" {
   })
 }
 
-# --- 14. VPC Flow Log ---
+#####################
+# 14. VPC Flow Log
+#####################
 resource "aws_flow_log" "vpc_flow_log" {
   vpc_id               = aws_vpc.main.id
   traffic_type         = "ALL"
@@ -142,7 +185,9 @@ resource "aws_flow_log" "vpc_flow_log" {
   depends_on = [aws_s3_bucket_policy.flow_logs_policy]
 }
 
-# --- 15. Outputs ---
+#####################
+# 15. Outputs
+#####################
 output "flow_logs_bucket" {
   value = aws_s3_bucket.flow_logs_bucket.id
 }
@@ -151,19 +196,25 @@ output "flow_log_id" {
   value = aws_flow_log.vpc_flow_log.id
 }
 
-# --- 16. Generate local key file after provisioning ---
+output "ec2_public_ip" {
+  value = aws_instance.web.public_ip
+}
+
+#####################
+# 16. Save private key locally
+#####################
 resource "local_file" "private_key_pem" {
   content         = tls_private_key.example.private_key_pem
   filename        = "${path.module}/my-keypair.pem"
   file_permission = "0600"
 }
 
-# --- 17. Null resource to ensure post-provision actions ---
+#####################
+# 17. Post-provision message
+#####################
 resource "null_resource" "post_setup" {
   provisioner "local-exec" {
-    command = <<EOT
-      echo "Private key saved at my-keypair.pem with 600 permissions"
-    EOT
+    command = "echo 'Private key saved at my-keypair.pem with 600 permissions'"
   }
 
   depends_on = [
