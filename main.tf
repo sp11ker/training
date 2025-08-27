@@ -84,7 +84,6 @@ resource "aws_instance" "web" {
 
 #################  This was added for flow logs but can be removed if not managing traffic withe the AWS onboarding or removed if doing the flow log access using the CLI,Console or CFT methods mentioned in the lab - NM 24th Aug 2025
 
-
 # --- 10. Random suffix for unique bucket name ---
 resource "random_id" "suffix" {
   byte_length = 4
@@ -93,6 +92,10 @@ resource "random_id" "suffix" {
 # --- 11. S3 Bucket for VPC Flow Logs (unencrypted) ---
 resource "aws_s3_bucket" "flow_logs_bucket" {
   bucket = "my-flow-logs-bucket-${random_id.suffix.hex}"
+  acl    = "private"
+
+  # explicitly ensure bucket is in provider region
+  # Terraform picks up the provider region automatically
 }
 
 # --- 12. Current AWS Account ID ---
@@ -134,8 +137,6 @@ resource "aws_flow_log" "vpc_flow_log" {
   traffic_type         = "ALL"
   log_destination      = aws_s3_bucket.flow_logs_bucket.arn
   log_destination_type = "s3"
-
-  # S3 flow logs do not allow custom log_format; AWS uses the standard format automatically
   max_aggregation_interval = 60
 
   depends_on = [aws_s3_bucket_policy.flow_logs_policy]
