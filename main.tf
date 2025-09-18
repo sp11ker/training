@@ -194,7 +194,7 @@ resource "aws_s3_bucket_policy" "flow_logs_policy" {
         ]
       },
 
-      # 3. Allow Illumio IPs to read objects (explicit external access) THIS IS NOT REQUIRED BY DEFUALT BUT LEFT IN THE SCRIPT FOR DEMO ( SITUATIONAL AS TO ITS REQUIRMENT BUT NOT IN THIS LAB )
+      # 3. Allow Illumio IPs to read objects (explicit external access) this is NOT REQUIRED by default but left in this script for demo ( SITUATIONAL AS TO ITS REQUIRMENT BUT NOT IN THIS LAB - NM )
       {
         Sid       = "AllowIllumioIPsRead"
         Effect    = "Allow"
