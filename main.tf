@@ -232,7 +232,7 @@ resource "aws_s3_bucket_policy" "flow_logs_policy" {
 # 14. VPC Flow Log 
 ###############################
 
-# This needs to be log format type 2,3,4,5 and isommented out currently and created manually after Terraform runs
+# This needs to be log format type 2,3,4,5 and is commented out currently and created manually after Terraform runs
 
 #resource "aws_flow_log" "vpc_flow_log" {
 #  vpc_id               = aws_vpc.main.id
