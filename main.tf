@@ -271,7 +271,7 @@ resource "null_resource" "post_setup" {
 }
 
 ###############################
-# 17. Add KMS decrypt to Illumio Integration role after this runs
+# 17. Add KMS decrypt to Illumio Integration role after this runs - not required
 ###############################
 
-# Need to Add KMS decrypt to the Illumio integration role after this script runs
+# You do not need to Add KMS decrypt to the Illumio integration role after this script runs
