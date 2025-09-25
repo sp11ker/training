@@ -136,7 +136,7 @@ resource "random_id" "suffix" {
 resource "aws_s3_bucket" "flow_logs_bucket" {
   bucket = "my-flow-logs-bucket-${random_id.suffix.hex}"
   tags = {
-    Name = "Terraform-FlowLogs-Bucket"
+    Name = "S3-FlowLogs-Bucket"
   }
 }
 
