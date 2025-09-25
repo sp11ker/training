@@ -12,7 +12,7 @@ provider "aws" {
 resource "aws_vpc" "main" {
   cidr_block = "10.0.0.0/16"
   tags = {
-    Name = "Terraform-VPC"
+    Name = "dev-VPC"
   }
 }
 
@@ -25,7 +25,7 @@ resource "aws_subnet" "main" {
   availability_zone       = "us-east-1a"
   map_public_ip_on_launch = true
   tags = {
-    Name = "Terraform-Subnet"
+    Name = "dev-Subnet"
   }
 }
 
@@ -35,7 +35,7 @@ resource "aws_subnet" "main" {
 resource "aws_internet_gateway" "gw" {
   vpc_id = aws_vpc.main.id
   tags = {
-    Name = "Terraform-IGW"
+    Name = "IGW"
   }
 }
 
@@ -119,7 +119,7 @@ resource "aws_instance" "web" {
   vpc_security_group_ids = [aws_security_group.ssh.id]
 
   tags = {
-    Name = "Terraform-EC2"
+    Name = "CRM-EC2"
   }
 }
 
