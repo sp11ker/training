@@ -1,4 +1,3 @@
-##THIS NEEDS TO BE THE NEW MAIN TO CHANGE THE SG's
 
 ###############################
 # Provider
@@ -269,9 +268,3 @@ resource "null_resource" "post_setup" {
     local_file.private_key_pem
   ]
 }
-
-###############################
-# 17. Add KMS decrypt to Illumio Integration role after this runs - not required
-###############################
-
-# You do not need to Add KMS decrypt to the Illumio integration role after this script runs
