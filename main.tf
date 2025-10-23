@@ -120,6 +120,7 @@ resource "aws_instance" "web" {
 
   tags = {
     Name = "CRM-EC2"
+    AllowCreate = "true"
   }
 }
 
